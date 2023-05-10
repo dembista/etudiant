@@ -27,6 +27,7 @@ public class Etudiant {
 
     private LocalDate dateNaissance;
     private String adresse;
+   // @Column(unique = true)
     private String email;
     private String telephone;
     private String photo;

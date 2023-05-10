@@ -1,5 +1,6 @@
 package com.example.projetEtudiant.service;
 
+import com.example.projetEtudiant.exception.BadRequestException;
 import com.example.projetEtudiant.model.*;
 import com.example.projetEtudiant.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,5 +128,10 @@ public class InscriptionService {
         paiementepositori.saveAll(payments);
     }
 
-
+    public void verifyEtudiantByAnneeByClasse(Etudiant etudiant,Classe classe,LocalDate anneeScolaire) throws BadRequestException {
+        Optional<Inscription> existingInscription = insc.findByEtudiantAndClasseAndAnneeScolaire(etudiant,classe,anneeScolaire);
+        if (existingInscription.isPresent()) {
+            throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
+        }
+    }
 }

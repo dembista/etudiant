@@ -2,6 +2,7 @@ package com.example.projetEtudiant.controller;
 
 import com.example.projetEtudiant.exception.BadRequestException;
 import com.example.projetEtudiant.model.*;
+import com.example.projetEtudiant.repositories.Inscriptions;
 import com.example.projetEtudiant.service.InscriptionService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,8 @@ public class InscriptionController {
     private final String INTERNAL_SERVER_ERROR = "Internal Server Error";
     @Autowired
     private InscriptionService inscriptionService;
+    @Autowired
+    private Inscriptions inscriptions;
 
     @PostMapping("/inscrire")
     public ResponseEntity<?> faireInscription(@RequestBody Inscription inscription) throws ParseException {
@@ -33,7 +36,7 @@ public class InscriptionController {
             Etudiant etudiant = null;
             LocalDate localDate = inscription.getEtudiant().getDateNaissance();
             LocalDate dateJour = LocalDate.now();
-            LocalDate  anneeSolaire = inscription.getAnneeScolaire();
+            LocalDate  anneeScolaire = inscription.getAnneeScolaire();
 
 
 
@@ -53,11 +56,13 @@ public class InscriptionController {
                     throw new BadRequestException( "Student can't have 2 registrations in same year");*/
                     inscription.setEtudiant(etudiant);
             }
-            if (inscription.getEtudiant().getId()!=null && inscription.getAnneeScolaire() == anneeSolaire)
-                throw new RuntimeException("L'etudiant est déja inscrit");
+
 
             Classe  classe = inscriptionService.findByIdClasses(inscription.getClasse().getId());
             inscription.setClasse(classe);
+            Optional<Inscription> existingInscription = inscriptions.findByEtudiantAndClasseAndAnneeScolaire(etudiant,classe,anneeScolaire);
+            if (existingInscription.isPresent())
+                throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
            Double mensualite = Double.valueOf(classe.getMensualite());
             Double fraisInscription = Double.valueOf(classe.getFraisInscription());
             Double minimumDeposit = fraisInscription + mensualite;
@@ -71,7 +76,6 @@ public class InscriptionController {
             throw e;
         }
     }
-
     @PostMapping("/ajoutEtudiant")
     public Etudiant ajoutEtudiant(@RequestBody Etudiant etudiant ) throws Exception {
         try{
