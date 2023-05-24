@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -23,11 +22,8 @@ public class Etudiant {
     private String nom;
     private String prenom;
     private String matricule;
-
-
     private LocalDate dateNaissance;
     private String adresse;
-   // @Column(unique = true)
     private String email;
     private String telephone;
     private String photo;

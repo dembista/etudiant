@@ -60,7 +60,7 @@ public class InscriptionController {
 
             Classe  classe = inscriptionService.findByIdClasses(inscription.getClasse().getId());
             inscription.setClasse(classe);
-            Optional<Inscription> existingInscription = inscriptions.findByEtudiantAndClasseAndAnneeScolaire(etudiant,classe,anneeScolaire);
+            Optional<Inscription> existingInscription = inscriptionService.verifyEtudiantByAnneeByClasse(etudiant,classe,anneeScolaire);
             if (existingInscription.isPresent())
                 throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
            Double mensualite = Double.valueOf(classe.getMensualite());

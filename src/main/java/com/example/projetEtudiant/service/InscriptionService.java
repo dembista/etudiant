@@ -117,7 +117,6 @@ public class InscriptionService {
                 payment.setMois(new SimpleDateFormat("MMMM").format(calendar.getTime()));
                 payment.setAmount(mensualite);
                 payments.add(payment);
-
             }
         }
         // Save payments
@@ -128,10 +127,11 @@ public class InscriptionService {
         paiementepositori.saveAll(payments);
     }
 
-    public void verifyEtudiantByAnneeByClasse(Etudiant etudiant,Classe classe,LocalDate anneeScolaire) throws BadRequestException {
+    public Optional<Inscription> verifyEtudiantByAnneeByClasse(Etudiant etudiant, Classe classe, LocalDate anneeScolaire) throws BadRequestException {
         Optional<Inscription> existingInscription = insc.findByEtudiantAndClasseAndAnneeScolaire(etudiant,classe,anneeScolaire);
         if (existingInscription.isPresent()) {
             throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
         }
+        return existingInscription;
     }
 }
