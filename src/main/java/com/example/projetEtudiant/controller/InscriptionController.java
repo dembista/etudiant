@@ -37,6 +37,15 @@ public class InscriptionController {
             LocalDate localDate = inscription.getEtudiant().getDateNaissance();
             LocalDate dateJour = LocalDate.now();
             LocalDate  anneeScolaire = inscription.getAnneeScolaire();
+            Classe  classe = inscriptionService.findByIdClasses(inscription.getClasse().getId());
+            inscription.setClasse(classe);
+            Double mensualite = Double.valueOf(classe.getMensualite());
+            Double autreFrais =  Double.valueOf(classe.getAutreFrais());
+            Double fraisInscription = Double.valueOf(classe.getFraisInscription());
+            Double minimumDeposit = fraisInscription + mensualite + autreFrais;
+            Double initialDeposit = inscription.getInitialDeposit();
+            Double maxDeposit = fraisInscription + (mensualite*Double.valueOf(inscription.getNbreMois())) + autreFrais;
+
 
 
 
@@ -46,6 +55,13 @@ public class InscriptionController {
                 if (age < 18)
                     throw  new BadRequestException("L'étudiant est trop jeune pour s'inscrire.");
                 //inscription.setEtudiant(etudiant);
+                if (initialDeposit < minimumDeposit)
+                    throw new IllegalArgumentException("Le montant minimum a déposé est " + minimumDeposit);
+                if (initialDeposit > maxDeposit)
+                    throw new IllegalArgumentException("Le montant maximum a déposé est " + maxDeposit);
+                Inscription inscrire = inscriptionService.inscrire(inscription);
+                inscriptionService.proceedPayments(inscrire, initialDeposit, minimumDeposit , mensualite);
+                return ResponseEntity.status(HttpStatus.CREATED).body(inscrire);
             }else
             {
                 etudiant = inscriptionService.findByIdEtudiant(inscription.getEtudiant().getId());
@@ -55,23 +71,25 @@ public class InscriptionController {
                 if (inscriptionOptional.isPresent())
                     throw new BadRequestException( "Student can't have 2 registrations in same year");*/
                     inscription.setEtudiant(etudiant);
+                Optional<Inscription> existingInscription = inscriptionService.verifyEtudiantByAnneeByClasse(etudiant,classe,anneeScolaire);
+                if (existingInscription.isPresent())
+                    throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
+                if (initialDeposit < minimumDeposit)
+                    throw new IllegalArgumentException("Le montant minimum a déposé est " + minimumDeposit);
+                if (initialDeposit > maxDeposit)
+                    throw new IllegalArgumentException("Le montant maximum a déposé est " + maxDeposit);
+                Inscription inscrire = inscriptionService.inscrire(inscription);
+                inscriptionService.proceedPayments(inscrire, initialDeposit, minimumDeposit , mensualite);
+                return ResponseEntity.status(HttpStatus.CREATED).body(inscrire);
             }
 
 
-            Classe  classe = inscriptionService.findByIdClasses(inscription.getClasse().getId());
-            inscription.setClasse(classe);
-            Optional<Inscription> existingInscription = inscriptionService.verifyEtudiantByAnneeByClasse(etudiant,classe,anneeScolaire);
+
+            /*Optional<Inscription> existingInscription = inscriptionService.verifyEtudiantByAnneeByClasse(etudiant,classe,anneeScolaire);
             if (existingInscription.isPresent())
-                throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
-           Double mensualite = Double.valueOf(classe.getMensualite());
-            Double fraisInscription = Double.valueOf(classe.getFraisInscription());
-            Double minimumDeposit = fraisInscription + mensualite;
-            Double initialDeposit = inscription.getInitialDeposit();
-            if (initialDeposit < minimumDeposit)
-                throw new IllegalArgumentException("Le montant minimum a déposé est " + minimumDeposit);
-            Inscription inscrire = inscriptionService.inscrire(inscription);
-            inscriptionService.proceedPayments(inscrire, initialDeposit, minimumDeposit , mensualite);
-            return ResponseEntity.status(HttpStatus.CREATED).body(inscrire);
+                throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");*/
+
+
         }catch(Exception e){
             throw e;
         }
@@ -111,7 +129,26 @@ public class InscriptionController {
             throw e;
         }
     }
+@PostMapping("/fairePaiement")
+    public Reglement fairePaiement(@RequestBody Reglement reglement ){
+        try{
+            Double mensualite = Double.valueOf(reglement.getPaiement().getInscription().getClasse().getMensualite());
+            Double montant = Double.valueOf(reglement.getMontant());
+            Double restant = Double.valueOf(montant%mensualite);
+            Paiement paiement = inscriptionService.findByIdPaiement(reglement.getPaiement().getId());
+            Mois mois = inscriptionService.findByIdMois(reglement.getMois().getId());
+            reglement.setPaiement(paiement);
+            reglement.setMois(mois);
+            if (reglement.getMois().getLibelle() == reglement.getPaiement().getMois())
+                throw new BadRequestException("Ce mois ci est déjà payer");
+            if (restant > 0)
+                throw new BadRequestException("Le montant est dépassé pour le mois");
 
+            return inscriptionService.faireReglementMoisPaiement(reglement);
+        }catch(Exception e){
+            throw e;
+        }
+}
     /*@PostMapping("/payer")
     public Paiement fairePaiement(@ModelAttribute("paiement")PaiementDto paiementDto){
         Paiement paiement = inscriptionService.fairePaiement(paiementDto.getPaiement());

@@ -27,6 +27,10 @@ public class InscriptionService {
     private Administrateur administrateur;
     @Autowired
     private Paiementepositori paiementepositori;
+    @Autowired
+    private MoisRepository moisRepository;
+    @Autowired
+    private ReglementRepositori reglementRepositori;
 
 
 
@@ -95,7 +99,7 @@ public class InscriptionService {
         // Create payment for November
         Paiement paymentNov = new Paiement();
         paymentNov.setInscription(registration);
-        paymentNov.setMois("November");
+        paymentNov.setMois("Novembre");
         paymentNov.setAmount(mensualite);
         payments.add(paymentNov);
         // Check amount after november payment
@@ -127,11 +131,40 @@ public class InscriptionService {
         paiementepositori.saveAll(payments);
     }
 
-    public Optional<Inscription> verifyEtudiantByAnneeByClasse(Etudiant etudiant, Classe classe, LocalDate anneeScolaire) throws BadRequestException {
+   public Optional<Inscription> verifyEtudiantByAnneeByClasse(Etudiant etudiant, Classe classe, LocalDate anneeScolaire) throws BadRequestException {
         Optional<Inscription> existingInscription = insc.findByEtudiantAndClasseAndAnneeScolaire(etudiant,classe,anneeScolaire);
         if (existingInscription.isPresent()) {
             throw new BadRequestException("L'étudiant est déjà inscrit dans cette classe pour l'année scolaire ");
         }
         return existingInscription;
+    }
+
+    public List<Mois> ajoutListMois(List<Mois> mois){
+        try {
+            moisRepository.saveAll(mois);
+            return mois;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    public List<Mois> getAllMois(){
+        return moisRepository.findAll();
+    }
+
+    public Reglement faireReglementMoisPaiement(Reglement reglement){
+        try {
+            return reglementRepositori.save(reglement);
+        }catch(Exception e){
+            throw e;
+        }
+    }
+
+
+    public Paiement findByIdPaiement(UUID id){
+        return paiementepositori.findById(id).orElse(null);
+    }
+    public Mois findByIdMois(UUID id){
+        return moisRepository.findById(id).orElse(null);
     }
 }

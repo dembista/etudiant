@@ -3,6 +3,7 @@ package com.example.projetEtudiant.repositories;
 import com.example.projetEtudiant.model.Classe;
 import com.example.projetEtudiant.model.Etudiant;
 import com.example.projetEtudiant.model.Inscription;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,5 @@ import java.util.UUID;
 @Repository
 public interface Inscriptions extends JpaRepository<Inscription,UUID> {
     Optional<Inscription> findByEtudiantAndClasseAndAnneeScolaire(Etudiant etudiant, Classe classe, LocalDate anneeScolaire);
+
 }
